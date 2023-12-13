@@ -13,7 +13,7 @@ struct HfsmCoutLogger : hfsm::LoggerInterface {
   // hfsm::LoggerInterface
   void record(const std::type_index & /*state*/, const char *const stateName,
               const Method /*method*/, const char *const methodName) override {
-    std::cout << stateName << "::" << methodName << "()\n";
+    std::cout << "(machine_logger): " << stateName << "::" << methodName << "()\n";
   }
 };
 #endif

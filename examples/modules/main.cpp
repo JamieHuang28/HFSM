@@ -3,15 +3,12 @@
 
 #define HFSM_ENABLE_LOG_INTERFACE
 #include "machine_logger.h"
-#include "modules.h"
+#include "context.h"
+#include "utils.h"
+#include "wlc_behavior.h"
+#include "wlc_world_model_adaptor.h"
 
 //------------------------------------------------------------------------------
-
-// data shared between FSM states and outside code
-struct Context {
-	unsigned cycleCount;
-  Car car;
-};
 
 // convenience typedef
 using M = hfsm::Machine<Context>;
@@ -19,96 +16,9 @@ using M = hfsm::Machine<Context>;
 ////////////////////////////////////////////////////////////////////////////////
 
 // forward declared for Red::transition()
+struct Wait;
+struct ParkIn;
 struct Off;
-
-// top-level region in the hierarchy
-struct On
-	: M::Base // necessary boilerplate!
-{
-	// called on state entry
-	void enter(Context& context) {
-		context.cycleCount = 0;
-	}
-
-	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-	// forward declared for Red::transition()
-	struct YellowDownwards;
-
-	// sub-states
-	struct Red
-		: M::Base
-	{
-		void enter(Context& context) {
-			++context.cycleCount;
-		}
-
-    void update(Context& context) {
-      context.car.stop();
-    }
-
-		// state can initiate transitions to _any_ other state
-		void transition(Control& control, Context& context) {
-			// multiple transitions can be initiated, can be useful in a hierarchy
-			if (context.cycleCount > 3)
-				control.changeTo<Off>();
-			else
-				control.changeTo<YellowDownwards>();
-		}
-	};
-
-	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-	// forward declared for transition()
-	struct Green;
-
-	struct YellowDownwards
-		: M::Base
-	{
-		void enter(Context&) {
-		}
-
-		void transition(Control& control, Context&) {
-			control.changeTo<Green>();
-		}
-	};
-
-	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-	struct YellowUpwards
-		: M::Base
-	{
-		void enter(Context&) {
-		}
-
-		void transition(Control& control, Context&) {
-			control.changeTo<Red>();
-		}
-	};
-
-	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-	struct Green
-		: M::Base
-	{
-		void enter(Context& context) {
-		}
-
-    void update(Context& context) {
-      context.car.drive();
-    }
-
-		void transition(Control& control, Context&) {
-			control.changeTo<YellowUpwards>();
-		}
-	};
-
-	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-};
-
-//------------------------------------------------------------------------------
-
-// another top-level state
 struct Off
 	: M::Base
 {
@@ -116,28 +26,92 @@ struct Off
 	}
 };
 
+struct ParkIn : M::Base {
+  void enter(Context&) {
+    STDLOG(create ParkingSlot);
+    STDLOG(openspace_state_machine_-> createMachineParkIn());
+    STDLOG(get init and target of APA);
+    STDLOG(set planning_core);
+    STDLOG(set turn signal by judging the target side);
+    STDLOG(openspace_state_machine_->changeToStandby());
+    STDLOG(reset advanced_abandon);
+  }
+
+  void transition(Control& control, Context& context) {
+    STDLOG(update_parking_slot_info and wheelstop collision_check);
+    if (context.is_finish || context.request == 3) {
+      STDLOG(finish_procedure include report failure reason);
+      control.changeTo<Wait>();
+    }
+  }
+};
+
+struct Wait : M::Base {
+  void enter(Context&) {
+  }
+
+  void transition(Control& control, Context& context) {
+    if (context.request == 1)
+      control.changeTo<ParkIn>();
+    else if (context.request == 2)
+      control.changeTo<Off>();
+  }
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 
-int
-main() {
+void palyWlcBehavior() {
+  Context context;
+  std::shared_ptr<WorldModel> world_model = std::make_shared<WorldModel>();
+  std::shared_ptr<WlcWorldModelAdaptor> wlc_wm_adaptor = std::make_shared<WlcWorldModelAdaptor>();
+  wlc_wm_adaptor->setWorldModel(world_model);
+  std::shared_ptr<WlcBehavior> wlc_behavior = std::make_shared<WlcBehavior>(wlc_wm_adaptor);
+  wlc_behavior->disableFinishFlag(context);
+}
+
+int test(int arc, char** argv) {
+  std::cout << "test" << std::endl;
+
+  // // implement the promt above with a class
+  // Prompter<int>::prompt("Enter int");
+  // std::cout << Prompter<int>::value() << std::endl;
+
+  // std::cout << prompt<YN>("Enter a y or n") << std::endl;
+  palyWlcBehavior();
+  return 0;
+}
+
+#define TEST 0
+int main(int arc, char** argv) {
+	#if TEST == 0
 	// shared data storage instance
 	Context context;
 
 	// state machine structure
 	M::PeerRoot<
-		// sub-machine ..
-		M::Composite<On,
-			// .. with 4 sub-states
-			On::Red,
-			On::YellowDownwards,
-			On::YellowUpwards,
-			On::Green
-		>,
-		Off
+		Wait,
+		ParkIn,
+    Off
 	> machine(context, HfsmCoutLogger::Instance());
 
-	while (machine.isActive<Off>() == false)
-		machine.update();
+  std::shared_ptr<WorldModel> world_model = std::make_shared<WorldModel>();
+  std::shared_ptr<WlcWorldModelAdaptor> wlc_wm_adaptor = std::make_shared<WlcWorldModelAdaptor>();
+  wlc_wm_adaptor->setWorldModel(world_model);
+  std::shared_ptr<WlcBehavior> wlc_behavior = std::make_shared<WlcBehavior>(wlc_wm_adaptor);
+
+	while (machine.isActive<Off>() == false) {
+    world_model->setRequest(context);
+    
+    if (machine.isActive<ParkIn>()) {
+      context.is_finish = prompt<YN>("is_finish?");
+      wlc_behavior->disableFinishFlag(context);
+    }
+    machine.update();
+  }
 
 	return 0;
+
+	#else
+	return test(arc, argv);
+	#endif
 }
