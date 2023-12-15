@@ -20,6 +20,6 @@ public:
     }
 
     void setRequest(Context &context) const {
-        context.request = prompt<int>("please input request, 0 for none, 1 for ParkIn, 2 for Off, 3 for Wait");
+        context.setRequest(prompt<int>("please input request, 0 for none, 1 for ParkIn, 2 for Off, 3 for Wait"));
     }
 };

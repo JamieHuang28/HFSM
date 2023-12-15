@@ -39,7 +39,7 @@ struct ParkIn : M::Base {
 
   void transition(Control& control, Context& context) {
     STDLOG(update_parking_slot_info and wheelstop collision_check);
-    if (context.is_finish || context.request == 3) {
+    if (context.is_finish || context.isWaitREquested()) {
       STDLOG(finish_procedure include report failure reason);
       control.changeTo<Wait>();
     }
@@ -51,9 +51,9 @@ struct Wait : M::Base {
   }
 
   void transition(Control& control, Context& context) {
-    if (context.request == 1)
+    if (context.isParkinRequested())
       control.changeTo<ParkIn>();
-    else if (context.request == 2)
+    else if (context.isOffRequested())
       control.changeTo<Off>();
   }
 };
