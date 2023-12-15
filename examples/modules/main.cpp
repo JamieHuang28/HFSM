@@ -39,7 +39,7 @@ struct ParkIn : M::Base {
 
   void transition(Control& control, Context& context) {
     STDLOG(update_parking_slot_info and wheelstop collision_check);
-    if (context.is_finish || context.request == 3) {
+    if (context.is_finish || context.world_model->request() == 3) {
       STDLOG(finish_procedure include report failure reason);
       control.changeTo<Wait>();
     }
@@ -51,9 +51,9 @@ struct Wait : M::Base {
   }
 
   void transition(Control& control, Context& context) {
-    if (context.request == 1)
+    if (context.world_model->request() == 1)
       control.changeTo<ParkIn>();
-    else if (context.request == 2)
+    else if (context.world_model->request() == 2)
       control.changeTo<Off>();
   }
 };
@@ -99,8 +99,10 @@ int main(int arc, char** argv) {
   wlc_wm_adaptor->setWorldModel(world_model);
   std::shared_ptr<WlcBehavior> wlc_behavior = std::make_shared<WlcBehavior>(wlc_wm_adaptor);
 
+  context.world_model = world_model;
+
 	while (machine.isActive<Off>() == false) {
-    world_model->setRequest(context);
+    world_model->setRequest();
     
     if (machine.isActive<ParkIn>()) {
       context.is_finish = prompt<YN>("is_finish?");

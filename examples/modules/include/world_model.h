@@ -1,7 +1,6 @@
 #pragma once
 #include <iostream>
 #include "utils.h"
-#include "context.h"
 
 class WorldModel {
 public:
@@ -19,7 +18,12 @@ public:
         return prompt<YN>("isWlcConnected?");
     }
 
-    void setRequest(Context &context) const {
-        context.request = prompt<int>("please input request, 0 for none, 1 for ParkIn, 2 for Off, 3 for Wait");
+    void setRequest() {
+        request_ = prompt<int>("please input request, 0 for none, 1 for ParkIn, 2 for Off, 3 for Wait");
     }
+    const int& request() const {
+        return request_;
+    }
+private:
+    int request_;
 };
