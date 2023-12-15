@@ -2,6 +2,13 @@
 #include <iostream>
 #include "utils.h"
 
+enum RequestType {
+    NONE = 0,
+    PARKIN = 1,
+    OFF = 2,
+    WAIT = 3
+};
+
 class WorldModel {
 public:
     WorldModel() = default;
@@ -19,11 +26,11 @@ public:
     }
 
     void setRequest(int request) {
-        request_ = request;
+        request_ = static_cast<RequestType>(request);
     }
-    const int& request() const {
+    const RequestType& request() const {
         return request_;
     }
 private:
-    int request_;
+    RequestType request_;
 };

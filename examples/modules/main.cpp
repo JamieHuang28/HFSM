@@ -38,8 +38,9 @@ struct ParkIn : M::Base {
   }
 
   void transition(Control& control, Context& context) {
+    context.is_finish = prompt<YN>("is_finish?");
     STDLOG(update_parking_slot_info and wheelstop collision_check);
-    if (context.is_finish || context.world_model->request() == 3) {
+    if (context.is_finish && context.wlc_behavior->isFinish()) {
       STDLOG(finish_procedure include report failure reason);
       control.changeTo<Wait>();
     }
@@ -51,9 +52,9 @@ struct Wait : M::Base {
   }
 
   void transition(Control& control, Context& context) {
-    if (context.world_model->request() == 1)
+    if (context.world_model->request() == RequestType::PARKIN)
       control.changeTo<ParkIn>();
-    else if (context.world_model->request() == 2)
+    else if (context.world_model->request() == RequestType::OFF)
       control.changeTo<Off>();
   }
 };
@@ -61,12 +62,11 @@ struct Wait : M::Base {
 ////////////////////////////////////////////////////////////////////////////////
 
 void palyWlcBehavior() {
-  Context context;
   std::shared_ptr<WorldModel> world_model = std::make_shared<WorldModel>();
+  Context context(world_model);
   std::shared_ptr<WlcWorldModelAdaptor> wlc_wm_adaptor = std::make_shared<WlcWorldModelAdaptor>();
   wlc_wm_adaptor->setWorldModel(world_model);
   std::shared_ptr<WlcBehavior> wlc_behavior = std::make_shared<WlcBehavior>(wlc_wm_adaptor);
-  wlc_behavior->disableFinishFlag(context);
 }
 
 int test(int arc, char** argv) {
@@ -84,8 +84,10 @@ int test(int arc, char** argv) {
 #define TEST 0
 int main(int arc, char** argv) {
 	#if TEST == 0
+
+  std::shared_ptr<WorldModel> world_model = std::make_shared<WorldModel>();
 	// shared data storage instance
-	Context context;
+	Context context(world_model);
 
 	// state machine structure
 	M::PeerRoot<
@@ -94,20 +96,9 @@ int main(int arc, char** argv) {
     Off
 	> machine(context, HfsmCoutLogger::Instance());
 
-  std::shared_ptr<WorldModel> world_model = std::make_shared<WorldModel>();
-  std::shared_ptr<WlcWorldModelAdaptor> wlc_wm_adaptor = std::make_shared<WlcWorldModelAdaptor>();
-  wlc_wm_adaptor->setWorldModel(world_model);
-  std::shared_ptr<WlcBehavior> wlc_behavior = std::make_shared<WlcBehavior>(wlc_wm_adaptor);
-
-  context.world_model = world_model;
-
 	while (machine.isActive<Off>() == false) {
-    world_model->setRequest(prompt<int>("please input request, 0 for none, 1 for ParkIn, 2 for Off, 3 for Wait"));
-    
-    if (machine.isActive<ParkIn>()) {
-      context.is_finish = prompt<YN>("is_finish?") && wlc_behavior->isFinish();
-    }
-    machine.update();
+    world_model->setRequest(prompt<int>("please input request, 0 for none, 1 for ParkIn, 2 for Off, 3 for Wait")); // stateless module
+    machine.update(); // stateful module are updated in the state machine
   }
 
 	return 0;

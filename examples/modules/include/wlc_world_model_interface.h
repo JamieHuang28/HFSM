@@ -7,5 +7,5 @@ public:
 
     virtual bool isInWlcStatus() const = 0;
 
-    virtual int request() const = 0;
+    virtual RequestType request() const = 0;
 };

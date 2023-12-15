@@ -21,7 +21,7 @@ public:
         }
         return ret;
     }
-    virtual int request() const override {
+    virtual RequestType request() const override {
         return world_model_->request();
     }
 private:
