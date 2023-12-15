@@ -5,8 +5,7 @@
 #include "machine_logger.h"
 #include "context.h"
 #include "utils.h"
-#include "wlc_behavior.h"
-#include "wlc_world_model_adaptor.h"
+#include "world_model.h"
 
 //------------------------------------------------------------------------------
 
@@ -38,9 +37,8 @@ struct ParkIn : M::Base {
   }
 
   void transition(Control& control, Context& context) {
-    context.is_finish = prompt<YN>("is_finish?");
     STDLOG(update_parking_slot_info and wheelstop collision_check);
-    if (context.is_finish && context.wlc_behavior->isFinish()) {
+    if (context.basic_parkin_behavior->isFinish() && context.wlc_behavior->isFinish()) {
       STDLOG(finish_procedure include report failure reason);
       control.changeTo<Wait>();
     }
