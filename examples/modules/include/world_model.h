@@ -18,8 +18,8 @@ public:
         return prompt<YN>("isWlcConnected?");
     }
 
-    void setRequest() {
-        request_ = prompt<int>("please input request, 0 for none, 1 for ParkIn, 2 for Off, 3 for Wait");
+    void setRequest(int request) {
+        request_ = request;
     }
     const int& request() const {
         return request_;

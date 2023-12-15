@@ -21,6 +21,9 @@ public:
         }
         return ret;
     }
+    virtual int request() const override {
+        return world_model_->request();
+    }
 private:
     std::shared_ptr<WorldModel> world_model_;
 };

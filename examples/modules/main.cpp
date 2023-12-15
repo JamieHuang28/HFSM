@@ -102,11 +102,10 @@ int main(int arc, char** argv) {
   context.world_model = world_model;
 
 	while (machine.isActive<Off>() == false) {
-    world_model->setRequest();
+    world_model->setRequest(prompt<int>("please input request, 0 for none, 1 for ParkIn, 2 for Off, 3 for Wait"));
     
     if (machine.isActive<ParkIn>()) {
-      context.is_finish = prompt<YN>("is_finish?");
-      wlc_behavior->disableFinishFlag(context);
+      context.is_finish = prompt<YN>("is_finish?") && wlc_behavior->isFinish();
     }
     machine.update();
   }
