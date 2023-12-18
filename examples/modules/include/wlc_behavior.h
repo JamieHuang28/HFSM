@@ -9,7 +9,7 @@ public:
     ~WlcBehavior() {}
     
     bool isFinish() const {
-        STDLOGINVOKE(": don not finish when in wlc mode");
+        STDLOGFUNCTION(": don not finish when in wlc mode");
         if (wlc_world_model_interface_->isInWlcStatus() && wlc_world_model_interface_->request() != RequestType::WAIT) {
             return false;
         } else {

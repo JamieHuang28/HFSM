@@ -7,7 +7,7 @@ public:
     ~BasicParkinBehavior() = default;
 
     bool isFinish() const {
-        STDLOGINVOKE("");
+        STDLOGFUNCTION("");
         return prompt<YN>("isFinish?");
     }
 };

@@ -15,9 +15,9 @@ public:
     virtual bool isInWlcStatus() const override {
         bool ret = world_model_->isInWlcMode() && world_model_->isWlcConnected();
         if (ret) {
-            STDLOG("isInWlcStatus");
+            STDLOGPROCESS("isInWlcStatus");
         } else {
-            STDLOG("not isInWlcStatus");
+            STDLOGPROCESS("not isInWlcStatus");
         }
         return ret;
     }

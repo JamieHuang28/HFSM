@@ -18,6 +18,7 @@ using M = hfsm::Machine<Context>;
 struct Wait;
 struct ParkIn;
 struct Off;
+
 struct Off
 	: M::Base
 {
@@ -27,21 +28,40 @@ struct Off
 
 struct ParkIn : M::Base {
   void enter(Context&) {
-    STDLOG(create ParkingSlot);
-    STDLOG(openspace_state_machine_-> createMachineParkIn());
-    STDLOG(get init and target of APA);
-    STDLOG(set planning_core);
-    STDLOG(set turn signal by judging the target side);
-    STDLOG(openspace_state_machine_->changeToStandby());
-    STDLOG(reset advanced_abandon);
+    STDLOGPROCESS(create ParkingSlot);
+    STDLOGPROCESS(openspace_state_machine_-> createMachineParkIn());
+    STDLOGPROCESS(get init and target of APA);
+    STDLOGPROCESS(set planning_core);
+    STDLOGPROCESS(set turn signal by judging the target side);
+    STDLOGPROCESS(openspace_state_machine_->changeToStandby());
+    STDLOGPROCESS(reset advanced_abandon);
   }
 
   void transition(Control& control, Context& context) {
-    STDLOG(update_parking_slot_info and wheelstop collision_check);
+    STDLOGPROCESS(update_parking_slot_info and wheelstop collision_check);
+    STDLOGPROCESS("if request to wait, change to wait");
+    STDLOGPROCESS("----the conditions below are additional----");
+    STDLOGPROCESS("if need_re_parking, set failure reason");
+    STDLOGPROCESS("if zigzag number over limit, set failure reason");
+    STDLOGPROCESS("--------");
     if (context.basic_parkin_behavior->isFinish() && context.wlc_behavior->isFinish()) {
-      STDLOG(finish_procedure include report failure reason);
+      STDLOGPROCESS(finish_procedure include report failure reason);
       control.changeTo<Wait>();
     }
+    STDLOGPROCESS("strategy_hit_wheelstop: finish or replan");
+    STDLOGPROCESS("strategy_wheelstop_in_parallel_slot: whether abandon or not");
+    STDLOGPROCESS("strategy_blocked_and_reached: whether wait for WLC or not");
+    STDLOGPROCESS("strategy_tiny_perpendicular_and_oblique_slot: whether abandon or not");
+    STDLOGPROCESS("update parking slot");
+    STDLOGPROCESS("dynamic plan");
+    STDLOGPROCESS("replan_strategy_when_openspace_fallback");
+    STDLOGPROCESS("eplan_strategy_when_block_by_pedestrian");
+    STDLOGPROCESS("calculate_behaviors_relating_block");
+    STDLOGPROCESS("replan_or_finish_strategy_when_blocked");
+    STDLOGPROCESS("strategy_traj_following_finish");
+    STDLOGPROCESS("active_replan_strategy_when_first_reverse_gear_switch");
+    STDLOGPROCESS("strategy_assumed_blocked");
+    STDLOGPROCESS("strategy_during_pause");
   }
 };
 
@@ -67,14 +87,16 @@ void palyWlcBehavior() {
   std::shared_ptr<WlcBehavior> wlc_behavior = std::make_shared<WlcBehavior>(wlc_wm_adaptor);
 }
 
+void playUtils() {
+  // implement the promt above with a class
+  Prompter<int>::prompt("Enter int");
+  std::cout << Prompter<int>::value() << std::endl;
+
+  std::cout << prompt<YN>("Enter a y or n") << std::endl;
+}
+
 int test(int arc, char** argv) {
   std::cout << "test" << std::endl;
-
-  // // implement the promt above with a class
-  // Prompter<int>::prompt("Enter int");
-  // std::cout << Prompter<int>::value() << std::endl;
-
-  // std::cout << prompt<YN>("Enter a y or n") << std::endl;
   palyWlcBehavior();
   return 0;
 }

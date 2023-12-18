@@ -1,8 +1,8 @@
 #pragma once
 #include <iostream>
 
-#define STDLOG(msg) std::cout << #msg << std::endl
-#define STDLOGINVOKE(msg) std::cout << __FUNCTION__ << msg << std::endl;
+#define STDLOGPROCESS(msg) std::cout << "(STDLOGPROCESS)" << #msg << std::endl
+#define STDLOGFUNCTION(msg) std::cout << "function-" << __FUNCTION__ << msg << std::endl;
 
 template <class T>
 class Prompter {
